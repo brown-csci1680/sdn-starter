@@ -4,6 +4,7 @@ Custom topologies for cs168, Fall 2018, Project 4
 """
 
 import sys
+import time
 import argparse
 
 from mininet.cli import CLI
@@ -195,6 +196,11 @@ def main():
 
     # Run network
     net.start()
+
+    # Wait for the network to initialize
+    # (This ensures the controller knows about all switches
+    # before the hosts send join requests)
+    time.sleep(1)
 
     # Tell each host to join the network
     for h in net.hosts:
