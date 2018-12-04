@@ -165,6 +165,7 @@ def main():
     sp_cmds["single"].add_argument("nodes", type=int)
     sp_cmds["tree"].add_argument("depth", type=int)
     sp_cmds["linear"].add_argument("nodes", type=int)
+    sp_cmds["mesh"].add_argument("nodes", type=int)
 
     args = parser.parse_args()
 
@@ -176,6 +177,8 @@ def main():
         topo = ALL_TOPOLOGIES["tree"](args.depth)
     elif args.command == "linear":
         topo = ALL_TOPOLOGIES["linear"](args.nodes)
+    elif args.command == "mesh":
+        topo = ALL_TOPOLOGIES["mesh"](args.nodes)
     else:
         topo = ALL_TOPOLOGIES[args.command]()
 
