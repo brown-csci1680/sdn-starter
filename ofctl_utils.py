@@ -119,6 +119,23 @@ class OfCtl(object):
         # Abstract method
         raise NotImplementedError()
 
+    def delete_flow(self, cookie=0, priority=0, match=None):
+        """
+        Delete a flow matching the following criteria
+        Arguments:
+        cookie       -- Cookie referencing this flow or set of flows
+                        (default 0)
+        priority     -- Priority value for this flow (default 0)
+        match        -- Match criteria for deletion
+                        (defaults to all)
+
+        NOTE:  OpenFlow 1.0 does not support deletion based on
+        the cookie value.  Instead, match fields must be specified.
+        """
+
+        # Abstract method
+        raise NotImplementedError()
+
     def send_arp(self, arp_opcode, vlan_id, dst_mac,
                  sender_mac, sender_ip,
                  target_ip, target_mac,
@@ -334,18 +351,15 @@ class OfCtl_v1_0(OfCtl):
                                   priority=priority, actions=actions)
         self.dp.send_msg(m)
 
-
-    def delete_flow(self, flow_stats):
-        match = flow_stats.match
-        cookie = flow_stats.cookie
-        cmd = self.dp.ofproto.OFPFC_DELETE_STRICT
-        priority = flow_stats.priority
+    def delete_flow(self, cookie=0, priority=0, match=None):
+        cmd = self.dp.ofproto.OFPFC_DELETE
         actions = []
 
+        ofp_parser = self.dp.ofproto_parser
+
         flow_mod = self.dp.ofproto_parser.OFPFlowMod(
-            self.dp, match, cookie, cmd, priority=priority, actions=actions)
+            self.dp, match=match, cookie=cookie, command=cmd, priority=priority, actions=actions)
         self.dp.send_msg(flow_mod)
-        self.logger.info('Delete flow [cookie=0x%x]', cookie, extra=self.sw_id)
 
 
 class OfCtl_after_v1_2(OfCtl):
@@ -427,14 +441,15 @@ class OfCtl_after_v1_2(OfCtl):
                       nw_dst=nw_dst, dst_mask=dst_mask,
                       idle_timeout=idle_timeout, actions=actions)
 
-    def delete_flow(self, flow_stats):
+    def delete_flow(self, cookie, priority=0, match=None):
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
 
+        if match is None:
+            match = ofp_parser.OFPMatch()
+
         cmd = ofp.OFPFC_DELETE
-        cookie = flow_stats.cookie
         cookie_mask = UINT64_MAX
-        match = ofp_parser.OFPMatch()
         inst = []
 
         flow_mod = ofp_parser.OFPFlowMod(self.dp, cookie, cookie_mask, 0, cmd,
